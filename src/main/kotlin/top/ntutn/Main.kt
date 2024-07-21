@@ -20,7 +20,7 @@ fun main() {
     }
     println(subDirs.joinToString())
 
-    val dimension: Dimension = Toolkit.getDefaultToolkit().getScreenSize()
+    val dimension: Dimension = Toolkit.getDefaultToolkit().screenSize
 
     val width = dimension.width
     val height = dimension.height

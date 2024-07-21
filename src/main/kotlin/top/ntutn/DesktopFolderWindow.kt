@@ -1,10 +1,11 @@
 package top.ntutn
 
+import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.Button
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -12,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toPainter
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
 import com.sun.jna.Pointer
@@ -19,6 +21,8 @@ import com.sun.jna.platform.win32.Shell32
 import com.sun.jna.platform.win32.ShellAPI
 import com.sun.jna.platform.win32.User32
 import com.sun.jna.platform.win32.WinDef.HWND
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.awt.AlphaComposite
 import java.awt.Window
 import java.awt.image.BufferedImage
@@ -52,37 +56,65 @@ fun DesktopFolderWindow(folderFile: File, onCloseWindowRequest: () -> Unit = {},
 
             icon = img.toPainter()
         }
-        var text by remember { mutableStateOf("Hello, World!") }
         MaterialTheme {
-            Box(modifier = Modifier.fillMaxSize().background(Color(0xaa9CCC65))) {
-                Column {
-                    Text(folderFile.name)
-                    Button(onClick = {
-                        Shell32.INSTANCE.ShellExecuteEx(ShellAPI.SHELLEXECUTEINFO().also {
-                            it.lpFile = folderFile.absolutePath
-                            it.nShow = User32.SW_SHOW
-                            it.fMask = 0x0000000c
-                            it.lpVerb = "open"
-                        })
-                    }) {
-                        Text("Launch")
-                    }
-                    Button(onClick = {
-                        text = "Exit"
-                        Shell32.INSTANCE.ShellExecuteEx(ShellAPI.SHELLEXECUTEINFO().also {
-                            it.lpFile = folderFile.absolutePath
-                            it.nShow = User32.SW_SHOW
-                            it.fMask = 0x0000000c
-                            it.lpVerb = "properties"
-                        })
-//                        Shell32.INSTANCE.ExtractAssociatedIconEx()
-                    }) {
-                        Text("Properties")
-                    }
-                }
+            DesktopFolderScreen(folderFile = folderFile)
+        }
+    }
+}
 
+@Composable
+@Preview
+private fun DesktopFolderScreenPreview() {
+    DesktopFolderScreen(folderFile = File("src/main/resources/demo-folder"))
+}
+
+@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
+@Composable
+private fun DesktopFolderScreen(modifier: Modifier = Modifier.fillMaxSize(), folderFile: File = File("")) {
+    val childrenFilesState = remember { mutableStateListOf<File>() }
+    Box(modifier = modifier) {
+        FlowRow {
+//            Text(folderFile.name)
+//            Button(onClick = {
+//                Shell32.INSTANCE.ShellExecuteEx(ShellAPI.SHELLEXECUTEINFO().also {
+//                    it.lpFile = folderFile.absolutePath
+//                    it.nShow = User32.SW_SHOW
+//                    it.fMask = 0x0000000c
+//                    it.lpVerb = "open"
+//                })
+//            }) {
+//                Text("Launch")
+//            }
+//            Button(onClick = {
+//                Shell32.INSTANCE.ShellExecuteEx(ShellAPI.SHELLEXECUTEINFO().also {
+//                    it.lpFile = folderFile.absolutePath
+//                    it.nShow = User32.SW_SHOW
+//                    it.fMask = 0x0000000c
+//                    it.lpVerb = "properties"
+//                })
+////                        Shell32.INSTANCE.ExtractAssociatedIconEx()
+//            }) {
+//                Text("Properties")
+//            }
+            childrenFilesState.forEach { childFile ->
+                Text(modifier = Modifier.combinedClickable(onDoubleClick = {
+                    Shell32.INSTANCE.ShellExecuteEx(ShellAPI.SHELLEXECUTEINFO().also {
+                        it.lpFile = childFile.absolutePath
+                        it.nShow = User32.SW_SHOW
+                        it.fMask = 0x0000000c
+                        it.lpVerb = "open"
+                    })
+                }, onClick = {
+
+                }), text = childFile.name)
+                Spacer(Modifier.size(8.dp))
             }
-
+        }
+        LaunchedEffect(folderFile) {
+            val children = withContext(Dispatchers.IO) {
+                folderFile.listFiles { file -> !file.isDirectory} ?: emptyArray()
+            }
+            childrenFilesState.addAll(children)
         }
     }
 }
