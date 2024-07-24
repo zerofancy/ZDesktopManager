@@ -8,6 +8,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
@@ -102,6 +103,13 @@ private fun DesktopFolderScreen(modifier: Modifier = Modifier.fillMaxSize(), chi
 @Composable
 private fun DesktopFileCard(file: File, modifier: Modifier = Modifier) {
     var iconPainter by remember { mutableStateOf(IconUtil.emptyPainter) }
+    val fileName by remember { derivedStateOf {
+        if (file.extension == "lnk" || file.extension == "url") {
+            file.nameWithoutExtension
+        } else {
+            file.name
+        }
+    } }
 
     Column(modifier = modifier
         .width(64.dp)
@@ -117,7 +125,7 @@ private fun DesktopFileCard(file: File, modifier: Modifier = Modifier) {
     })) {
         val icon = iconPainter
         Image(modifier = Modifier.size(64.dp), painter = icon, contentDescription = file.name)
-        Text(modifier = Modifier, text = file.name, maxLines = 2)
+        Text(modifier = Modifier, text = fileName, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
     LaunchedEffect(file) {
         iconPainter = IconUtil.getFileIconPainter(file, 64.dp, 64.dp)

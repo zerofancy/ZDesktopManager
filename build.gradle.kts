@@ -12,6 +12,7 @@ version = "1.0-SNAPSHOT"
 repositories {
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    maven("https://jitpack.io")
     google()
 }
 
@@ -25,6 +26,7 @@ dependencies {
     implementation("net.java.dev.jna:jna:5.14.0")
     // https://mvnrepository.com/artifact/net.java.dev.jna/jna-platform
     implementation("net.java.dev.jna:jna-platform:5.14.0")
+    implementation("com.github.qurben:jico:v2.2.0")
 }
 
 compose.desktop {
