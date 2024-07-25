@@ -48,6 +48,7 @@ fun DesktopFolderWindow(folderFile: File, onCloseWindowRequest: () -> Unit = {},
                 val children = withContext(Dispatchers.IO) {
                     folderFile.listFiles { file -> !file.isDirectory} ?: emptyArray()
                 }
+                childrenFilesState.clear()
                 childrenFilesState.addAll(children)
             }
         }

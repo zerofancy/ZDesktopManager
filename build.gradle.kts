@@ -27,6 +27,8 @@ dependencies {
     // https://mvnrepository.com/artifact/net.java.dev.jna/jna-platform
     implementation("net.java.dev.jna:jna-platform:5.14.0")
     implementation("com.github.qurben:jico:v2.2.0")
+    // https://mvnrepository.com/artifact/commons-io/commons-io
+    implementation("commons-io:commons-io:2.16.1")
 }
 
 compose.desktop {
