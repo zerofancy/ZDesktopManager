@@ -7,6 +7,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -19,6 +20,9 @@ import com.sun.jna.platform.win32.User32
 import com.sun.jna.platform.win32.WinDef.HWND
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.apache.commons.io.monitor.FileAlterationListenerAdaptor
+import org.apache.commons.io.monitor.FileAlterationMonitor
+import org.apache.commons.io.monitor.FileAlterationObserver
 import top.ntutn.util.IconUtil
 import java.awt.Window
 import java.io.File
@@ -30,8 +34,8 @@ fun DesktopFolderWindow(folderFile: File, onCloseWindowRequest: () -> Unit = {},
     DialogWindow(
         onCloseRequest = onCloseWindowRequest,
         resizable = false,
-        undecorated = false,
-        transparent = false,
+        undecorated = true,
+        transparent = true,
         title = folderFile.name,
         state = dialogState,
         icon = icon
@@ -43,13 +47,59 @@ fun DesktopFolderWindow(folderFile: File, onCloseWindowRequest: () -> Unit = {},
         }
         MaterialTheme {
             val childrenFilesState = remember { mutableStateListOf<File>() }
-            DesktopFolderScreen(childrenFiles = childrenFilesState)
+            DesktopFolderScreen(modifier = Modifier.fillMaxSize().background(Color(0xaa999999) ), childrenFiles = childrenFilesState)
             LaunchedEffect(folderFile) {
                 val children = withContext(Dispatchers.IO) {
                     folderFile.listFiles { file -> !file.isDirectory} ?: emptyArray()
                 }
                 childrenFilesState.clear()
                 childrenFilesState.addAll(children)
+            }
+            DisposableEffect(folderFile) {
+                val monitor = FileAlterationMonitor(3_000L, FileAlterationObserver(folderFile).also {
+                    it.addListener(object : FileAlterationListenerAdaptor() {
+                        override fun onDirectoryCreate(directory: File?) {
+                            super.onDirectoryCreate(directory)
+                            updateFile()
+                        }
+
+                        override fun onDirectoryChange(directory: File?) {
+                            super.onDirectoryChange(directory)
+                            updateFile()
+                        }
+
+                        override fun onDirectoryDelete(directory: File?) {
+                            super.onDirectoryDelete(directory)
+                            updateFile()
+                        }
+
+                        override fun onFileChange(file: File?) {
+                            super.onFileChange(file)
+                            updateFile()
+                        }
+
+                        override fun onFileCreate(file: File?) {
+                            super.onFileCreate(file)
+                            updateFile()
+                        }
+
+                        override fun onFileDelete(file: File?) {
+                            super.onFileDelete(file)
+                            updateFile()
+                        }
+
+                        private fun updateFile() {
+                            val files = folderFile.listFiles { file -> !file.isDirectory }?.toList() ?: emptyList<File>()
+                            childrenFilesState.clear()
+                            childrenFilesState.addAll(files)
+                        }
+                    })
+                })
+
+                monitor.start()
+                onDispose {
+                    monitor.stop()
+                }
             }
         }
     }

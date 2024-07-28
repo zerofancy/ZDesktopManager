@@ -1,11 +1,14 @@
 package top.ntutn
 
+import androidx.compose.material.Icon
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.window.*
 import com.sun.jna.platform.win32.*
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor
 import org.apache.commons.io.monitor.FileAlterationMonitor
 import org.apache.commons.io.monitor.FileAlterationObserver
+import top.ntutn.util.IconUtil
 import java.awt.Dimension
 import java.awt.Toolkit
 import java.awt.Window
@@ -36,8 +39,7 @@ fun main() {
         var nextWindowTop = 16
         var nextWindowRight = 16
         desktopChildrenDirs.forEachIndexed { dirIndex, dir ->
-            // fixme 文件夹监听后新插入顺序会乱
-            DesktopFolderWindow(dir, onCloseWindowRequest = ::exitApplication, onPlacingWindow = { window: Window ->
+            DesktopFolderWindow(dir, onCloseWindowRequest = {}, onPlacingWindow = { window: Window ->
                 window.setLocation(width - nextWindowRight - window.width, nextWindowTop)
                 nextWindowTop += window.height
                 nextWindowTop += 16
@@ -48,7 +50,11 @@ fun main() {
                 }
             })
         }
-        LaunchedEffect(null) {
+        Tray(icon = IconUtil.emptyPainter, tooltip = "桌面管理工具", menu = {
+            Item("Exit", onClick = ::exitApplication)
+        })
+
+        LaunchedEffect(desktopDir) {
             val monitor = FileAlterationMonitor(5_000L, FileAlterationObserver(desktopDir).also {
                 it.addListener(object : FileAlterationListenerAdaptor() {
                     override fun onDirectoryCreate(directory: File?) {
@@ -68,13 +74,8 @@ fun main() {
 
                     private fun updateDir() {
                         val dirs = desktopDir.listFiles { file -> file.isDirectory }?.toList() ?: emptyList<File>()
-                        if (dirs.isEmpty()) {
-                            // todo show tip message
-                            exitApplication()
-                        } else {
-                            desktopChildrenDirs.clear()
-                            desktopChildrenDirs.addAll(dirs)
-                        }
+                        desktopChildrenDirs.clear()
+                        desktopChildrenDirs.addAll(dirs)
                     }
                 })
             })
