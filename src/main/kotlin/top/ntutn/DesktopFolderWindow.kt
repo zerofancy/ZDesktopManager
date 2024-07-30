@@ -50,7 +50,7 @@ fun DesktopFolderWindow(folderFile: File, onCloseWindowRequest: () -> Unit = {},
             DesktopFolderScreen(modifier = Modifier.fillMaxSize().background(Color(0xaa999999) ), childrenFiles = childrenFilesState)
             LaunchedEffect(folderFile) {
                 val children = withContext(Dispatchers.IO) {
-                    folderFile.listFiles { file -> !file.isDirectory} ?: emptyArray()
+                    folderFile.listFiles { file -> !file.isHidden} ?: emptyArray()
                 }
                 childrenFilesState.clear()
                 childrenFilesState.addAll(children)
@@ -89,7 +89,7 @@ fun DesktopFolderWindow(folderFile: File, onCloseWindowRequest: () -> Unit = {},
                         }
 
                         private fun updateFile() {
-                            val files = folderFile.listFiles { file -> !file.isDirectory }?.toList() ?: emptyList<File>()
+                            val files = folderFile.listFiles { file -> !file.isHidden }?.toList() ?: emptyList<File>()
                             childrenFilesState.clear()
                             childrenFilesState.addAll(files)
                         }
@@ -169,7 +169,7 @@ private fun DesktopFileCard(file: File, modifier: Modifier = Modifier) {
             it.lpFile = file.absolutePath
             it.nShow = User32.SW_SHOW
             it.fMask = 0x0000000c
-            it.lpVerb = "open"
+            it.lpVerb = if (file.isDirectory) "explore" else "open"
         })
     }, onClick = {
 
