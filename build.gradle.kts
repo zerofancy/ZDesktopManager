@@ -37,14 +37,14 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Msi, TargetFormat.Exe)
-            packageVersion = "1.3.0"
+            packageVersion = "1.3.1"
             description = "A simple Windows desktop workspace manager."
 
             windows {
                 packageName = "top_ntutn_ZDesktopManager"
                 dirChooser = true
                 menuGroup = "ntutn"
-                upgradeUuid = "679ff412-fa99-4353-9a57-3ff6533a3788" // generate with https://www.guidgen.com
+                upgradeUuid = "855b0d41-4bd0-4e36-988d-73a28fb349d2" // generate with https://www.guidgen.com
                 // licenseFile.set(project.file("LICENSE.txt")) // 不能显示中文
             }
         }

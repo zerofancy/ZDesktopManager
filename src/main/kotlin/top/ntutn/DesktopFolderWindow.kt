@@ -161,22 +161,37 @@ private fun DesktopFileCard(file: File, modifier: Modifier = Modifier) {
             file.name
         }
     } }
-
-    Column(modifier = modifier
-        .width(64.dp)
-        .combinedClickable(onDoubleClick = {
+    val openFunction: () -> Unit = { // fixme 这个API有时好像会导致卡死，需要异步+超时处理
         Shell32.INSTANCE.ShellExecuteEx(ShellAPI.SHELLEXECUTEINFO().also {
             it.lpFile = file.absolutePath
             it.nShow = User32.SW_SHOW
             it.fMask = 0x0000000c
             it.lpVerb = if (file.isDirectory) "explore" else "open"
         })
-    }, onClick = {
+    }
 
-    })) {
-        val icon = iconPainter
-        Image(modifier = Modifier.size(64.dp), painter = icon, contentDescription = file.name)
-        Text(modifier = Modifier, text = fileName, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    ContextMenuArea(items = {
+        listOf(
+            ContextMenuItem(if (file.isDirectory) "浏览..." else "打开", openFunction),
+            ContextMenuItem("属性") {
+                Shell32.INSTANCE.ShellExecuteEx(ShellAPI.SHELLEXECUTEINFO().also {
+                    it.lpFile = file.absolutePath
+                    it.nShow = User32.SW_SHOW
+                    it.fMask = 0x0000000c
+                    it.lpVerb = "properties"
+                })
+            }
+        )
+    }) {
+        Column(modifier = modifier
+            .width(64.dp)
+            .combinedClickable(onDoubleClick = openFunction, onClick = {
+
+            })) {
+            val icon = iconPainter
+            Image(modifier = Modifier.size(64.dp), painter = icon, contentDescription = file.name)
+            Text(modifier = Modifier, text = fileName, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
     }
     LaunchedEffect(file) {
         iconPainter = IconUtil.getFileIconPainter(file, 64.dp, 64.dp)
