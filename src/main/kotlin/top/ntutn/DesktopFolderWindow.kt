@@ -3,13 +3,18 @@ package top.ntutn
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
@@ -119,34 +124,19 @@ private fun DesktopFolderScreenPreview() {
 @Composable
 private fun DesktopFolderScreen(modifier: Modifier = Modifier.fillMaxSize(), childrenFiles: List<File>) {
     Box(modifier = modifier.padding(8.dp)) {
-        FlowRow(modifier = Modifier.verticalScroll(rememberScrollState())) {
-//            Text(folderFile.name)
-//            Button(onClick = {
-//                Shell32.INSTANCE.ShellExecuteEx(ShellAPI.SHELLEXECUTEINFO().also {
-//                    it.lpFile = folderFile.absolutePath
-//                    it.nShow = User32.SW_SHOW
-//                    it.fMask = 0x0000000c
-//                    it.lpVerb = "open"
-//                })
-//            }) {
-//                Text("Launch")
-//            }
-//            Button(onClick = {
-//                Shell32.INSTANCE.ShellExecuteEx(ShellAPI.SHELLEXECUTEINFO().also {
-//                    it.lpFile = folderFile.absolutePath
-//                    it.nShow = User32.SW_SHOW
-//                    it.fMask = 0x0000000c
-//                    it.lpVerb = "properties"
-//                })
-////                        Shell32.INSTANCE.ExtractAssociatedIconEx()
-//            }) {
-//                Text("Properties")
-//            }
+        val state = rememberScrollState()
+        FlowRow(modifier = Modifier.verticalScroll(state)) {
             childrenFiles.forEach { childFile ->
                 DesktopFileCard(childFile)
                 Spacer(Modifier.size(8.dp))
             }
         }
+        VerticalScrollbar(
+            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+            adapter = rememberScrollbarAdapter(
+                scrollState = state
+            )
+        )
     }
 }
 
@@ -183,14 +173,33 @@ private fun DesktopFileCard(file: File, modifier: Modifier = Modifier) {
             }
         )
     }) {
-        Column(modifier = modifier
-            .width(64.dp)
-            .combinedClickable(onDoubleClick = openFunction, onClick = {
+        TooltipArea(tooltip = {
+            // composable tooltip content
+            Surface(
+                modifier = Modifier.shadow(4.dp),
+            ) {
+                Text(
+                    text = fileName,
+                    modifier = Modifier//.padding(10.dp)
+                )
+            }
+        },
+            modifier = modifier,
+            delayMillis = 600, // in milliseconds
+            tooltipPlacement = TooltipPlacement.CursorPoint(
+                alignment = Alignment.BottomEnd,
+                offset = DpOffset.Zero // tooltip offset
+            )) {
+            Column(modifier = Modifier
+                .width(64.dp)
+                .combinedClickable(onDoubleClick = openFunction, onClick = {
 
-            })) {
-            val icon = iconPainter
-            Image(modifier = Modifier.size(64.dp), painter = icon, contentDescription = file.name)
-            Text(modifier = Modifier, text = fileName, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                })) {
+                val icon = iconPainter
+                Image(modifier = Modifier.size(64.dp), painter = icon, contentDescription = file.name)
+                Text(modifier = Modifier, text = fileName, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+
         }
     }
     LaunchedEffect(file) {

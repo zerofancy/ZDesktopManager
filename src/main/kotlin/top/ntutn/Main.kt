@@ -1,14 +1,21 @@
 package top.ntutn
 
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.window.*
-import com.sun.jna.platform.win32.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.window.Tray
+import androidx.compose.ui.window.application
+import com.sun.jna.Pointer
+import com.sun.jna.WString
+import com.sun.jna.platform.win32.Shell32Util
+import com.sun.jna.platform.win32.ShlObj
+import com.sun.jna.platform.win32.WinDef
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor
 import org.apache.commons.io.monitor.FileAlterationMonitor
 import org.apache.commons.io.monitor.FileAlterationObserver
+import top.ntutn.util.ApplicationUtil
 import top.ntutn.util.IconUtil
+import top.ntutn.util.User32Extend
 import java.awt.Dimension
 import java.awt.Toolkit
 import java.awt.Window
@@ -16,6 +23,14 @@ import java.io.File
 
 
 fun main() {
+    val isFirstInstance = ApplicationUtil.ensureSingleInstance("top.ntutn.KDesktopManager")
+
+    if (!isFirstInstance) {
+        println("You should only run this for one time.")
+        User32Extend.instance.MessageBox(WinDef.HWND(Pointer.NULL), WString("You should only run this for one time."), WString("ZDesktopManager"), 16)
+        return
+    }
+
     val desktopDir = Shell32Util.getSpecialFolderPath(ShlObj.CSIDL_DESKTOP, false).let(::File)
     val subDirs = desktopDir.listFiles { file -> file.isDirectory }?.toMutableList() ?: mutableListOf()
 
