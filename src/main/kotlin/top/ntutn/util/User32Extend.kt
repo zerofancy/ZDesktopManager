@@ -1,14 +1,13 @@
 package top.ntutn.util
 
 import com.sun.jna.Native
-import com.sun.jna.WString
 import com.sun.jna.platform.win32.User32
 import com.sun.jna.platform.win32.WinDef.HWND
 import com.sun.jna.win32.W32APIOptions
 
 interface User32Extend: User32 {
     companion object {
-        val instance: User32Extend = Native.load("user32", User32Extend::class.java, W32APIOptions.DEFAULT_OPTIONS);
+        val instance: User32Extend = Native.load("user32", User32Extend::class.java, W32APIOptions.DEFAULT_OPTIONS)
     }
 
     /**
@@ -19,5 +18,5 @@ interface User32Extend: User32 {
      *   [in]           UINT    uType
      * );
      */
-    fun MessageBox(hWnd: HWND, lpText: WString, lpCaption: WString, uType: Int): Int
+    fun MessageBox(hWnd: HWND, lpText: String, lpCaption: String, uType: Long): Int
 }
