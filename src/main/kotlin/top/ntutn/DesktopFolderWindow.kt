@@ -51,8 +51,21 @@ fun DesktopFolderWindow(folderFile: File, onCloseWindowRequest: () -> Unit = {},
             icon = IconUtil.getFileIconPainter(folderFile, 64.dp, 64.dp)
         }
         MaterialTheme {
+            val openFunction: () -> Unit = { // fixme 这个API有时好像会导致卡死，需要异步+超时处理
+                Shell32.INSTANCE.ShellExecuteEx(ShellAPI.SHELLEXECUTEINFO().also {
+                    it.lpFile = folderFile.absolutePath
+                    it.nShow = User32.SW_SHOW
+                    it.fMask = 0x0000000c
+                    it.lpVerb = if (folderFile.isDirectory) "explore" else "open"
+                })
+            }
             val childrenFilesState = remember { mutableStateListOf<File>() }
-            DesktopFolderScreen(modifier = Modifier.fillMaxSize().background(Color(0xaa999999) ), childrenFiles = childrenFilesState)
+            FileContextMenu(folderFile, openFunction) {
+                DesktopFolderScreen(
+                    modifier = Modifier.fillMaxSize().background(Color(0xaa999999)),
+                    childrenFiles = childrenFilesState
+                )
+            }
             LaunchedEffect(folderFile) {
                 val children = withContext(Dispatchers.IO) {
                     folderFile.listFiles { file -> !file.isHidden} ?: emptyArray()
@@ -127,7 +140,7 @@ private fun DesktopFolderScreen(modifier: Modifier = Modifier.fillMaxSize(), chi
         val state = rememberScrollState()
         FlowRow(modifier = Modifier.verticalScroll(state)) {
             childrenFiles.forEach { childFile ->
-                DesktopFileCard(childFile)
+                    DesktopFileCard(childFile)
                 Spacer(Modifier.size(8.dp))
             }
         }
@@ -139,6 +152,24 @@ private fun DesktopFolderScreen(modifier: Modifier = Modifier.fillMaxSize(), chi
         )
     }
 }
+
+@Composable
+private fun FileContextMenu(file: File, openFunction: () -> Unit, content: @Composable () -> Unit) {
+    ContextMenuArea(items = {
+        listOf(
+            ContextMenuItem(if (file.isDirectory) "浏览..." else "打开", openFunction),
+            ContextMenuItem("属性") {
+                Shell32.INSTANCE.ShellExecuteEx(ShellAPI.SHELLEXECUTEINFO().also {
+                    it.lpFile = file.absolutePath
+                    it.nShow = User32.SW_SHOW
+                    it.fMask = 0x0000000c
+                    it.lpVerb = "properties"
+                })
+            }
+        )
+    }, content = content)
+}
+
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -159,20 +190,7 @@ private fun DesktopFileCard(file: File, modifier: Modifier = Modifier) {
             it.lpVerb = if (file.isDirectory) "explore" else "open"
         })
     }
-
-    ContextMenuArea(items = {
-        listOf(
-            ContextMenuItem(if (file.isDirectory) "浏览..." else "打开", openFunction),
-            ContextMenuItem("属性") {
-                Shell32.INSTANCE.ShellExecuteEx(ShellAPI.SHELLEXECUTEINFO().also {
-                    it.lpFile = file.absolutePath
-                    it.nShow = User32.SW_SHOW
-                    it.fMask = 0x0000000c
-                    it.lpVerb = "properties"
-                })
-            }
-        )
-    }) {
+    FileContextMenu(file, openFunction) {
         TooltipArea(tooltip = {
             // composable tooltip content
             Surface(
@@ -199,7 +217,6 @@ private fun DesktopFileCard(file: File, modifier: Modifier = Modifier) {
                 Image(modifier = Modifier.size(64.dp), painter = icon, contentDescription = file.name)
                 Text(modifier = Modifier, text = fileName, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
-
         }
     }
     LaunchedEffect(file) {
