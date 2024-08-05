@@ -6,21 +6,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.window.Tray
 import androidx.compose.ui.window.application
-import com.sun.jna.Pointer
-import com.sun.jna.WString
 import com.sun.jna.platform.win32.Shell32Util
 import com.sun.jna.platform.win32.ShlObj
-import com.sun.jna.platform.win32.WinDef
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor
 import org.apache.commons.io.monitor.FileAlterationMonitor
 import org.apache.commons.io.monitor.FileAlterationObserver
+import top.ntutn.ui.JNAMessageBox
 import top.ntutn.util.ApplicationUtil
 import top.ntutn.util.IconUtil
-import top.ntutn.util.User32Extend
-import top.ntutn.util.User32ExtendFlags
 import java.awt.Dimension
 import java.awt.Toolkit
 import java.awt.Window
@@ -32,7 +25,10 @@ fun main() {
 
     if (!isFirstInstance) {
         println("You should only run this for one time.")
-        User32Extend.instance.MessageBox(WinDef.HWND(Pointer.NULL), "You should only run this for one time.", "ZDesktopManager", User32ExtendFlags.MB_ICONERROR)
+        JNAMessageBox.builder {
+            content("You should only run this for one time.", "ZDesktopManager")
+            errorIcon()
+        }.build().showSync()
         return
     }
 
@@ -73,14 +69,11 @@ fun main() {
         Tray(icon = IconUtil.emptyPainter, tooltip = "桌面管理工具", menu = {
             val scope = rememberCoroutineScope()
             Item("Exit", onClick = {
-                scope.launch {
-                    val res = withContext(Dispatchers.IO) {
-                        User32Extend.instance.MessageBox(WinDef.HWND(Pointer.NULL), "确实要退出桌面管理工具吗？", "ZDesktopManager", User32ExtendFlags.MB_ICONQUESTION or User32ExtendFlags.MB_YESNO)
-                    }
-                    if (res == User32ExtendFlags.MB_RETURN_IDYES) {
-                        exitApplication()
-                    }
-                }
+                JNAMessageBox.builder {
+                    content("确实要退出桌面管理工具吗？", "ZDesktopManager")
+                    informationIcon()
+                    yesNo(yesCallback = ::exitApplication)
+                }.build().showAsync()
             })
         })
 
