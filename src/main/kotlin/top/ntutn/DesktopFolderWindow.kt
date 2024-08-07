@@ -3,7 +3,7 @@ package top.ntutn
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
@@ -32,6 +32,7 @@ import top.ntutn.util.IconUtil
 import java.awt.Window
 import java.io.File
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DesktopFolderWindow(folderFile: File, onCloseWindowRequest: () -> Unit = {}, onPlacingWindow: (Window) -> Unit) {
     val dialogState = rememberDialogState()
@@ -61,10 +62,23 @@ fun DesktopFolderWindow(folderFile: File, onCloseWindowRequest: () -> Unit = {},
             }
             val childrenFilesState = remember { mutableStateListOf<File>() }
             FileContextMenu(folderFile, openFunction) {
-                DesktopFolderScreen(
-                    modifier = Modifier.fillMaxSize().background(Color(0xaa999999)),
-                    childrenFiles = childrenFilesState
-                )
+                Column {
+                    WindowDraggableArea {
+                        Row(
+                            modifier = Modifier.fillMaxWidth()
+                                .border(width = 1.dp, color = Color.DarkGray)
+                                .background(color = Color(0xdd999999))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(folderFile.nameWithoutExtension)
+                        }
+                    }
+                    DesktopFolderScreen(
+                        folderFile.nameWithoutExtension,
+                        childrenFiles = childrenFilesState,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
             LaunchedEffect(folderFile) {
                 val children = withContext(Dispatchers.IO) {
@@ -130,26 +144,37 @@ private fun DesktopFolderScreenPreview() {
         File("src/main/resources/demo-folder/Hello.html"),
         File("src/main/resources/demo-folder/Hello.md"),
     )
-    DesktopFolderScreen(childrenFiles = childrenFiles.toList())
+    DesktopFolderScreen("Demo", childrenFiles = childrenFiles.toList())
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DesktopFolderScreen(modifier: Modifier = Modifier.fillMaxSize(), childrenFiles: List<File>) {
-    Box(modifier = modifier.padding(8.dp)) {
-        val state = rememberScrollState()
-        FlowRow(modifier = Modifier.verticalScroll(state)) {
-            childrenFiles.forEach { childFile ->
+private fun DesktopFolderScreen(currentDirName: String, childrenFiles: List<File>, modifier: Modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = modifier
+        .background(Color(0xaa999999))
+    ) {
+        Box(
+            modifier = Modifier
+        ) {
+            val state = rememberScrollState()
+            FlowRow(
+                modifier = Modifier.verticalScroll(state)
+                    .padding(8.dp)
+            ) {
+                childrenFiles.forEach { childFile ->
                     DesktopFileCard(childFile)
-                Spacer(Modifier.size(8.dp))
+                    Spacer(Modifier.size(8.dp))
+                }
             }
-        }
-        VerticalScrollbar(
-            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-            adapter = rememberScrollbarAdapter(
-                scrollState = state
+            VerticalScrollbar(
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                adapter = rememberScrollbarAdapter(
+                    scrollState = state
+                )
             )
-        )
+        }
+
     }
 }
 
