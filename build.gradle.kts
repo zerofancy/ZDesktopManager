@@ -9,6 +9,27 @@ plugins {
 group = "top.ntutn"
 version = "1.0-SNAPSHOT"
 
+tasks.register("buildGuidePdf") {
+    val mdFile = project.file("docs/guide/Guide.md")
+    val generatedResources = project.file("build/generated/resources")
+    generatedResources.deleteRecursively()
+    generatedResources.mkdirs()
+    val outputFile = File(generatedResources, "Guide.pdf")
+
+    val command = arrayOf("pandoc", mdFile.absolutePath, "-o" , outputFile.absolutePath, "--pdf-engine=xelatex", "-V", "CJKmainfont=KaiTi")
+    println(command.joinToString(" "))
+    val process = ProcessBuilder(*command)
+        .start()
+    process.waitFor()
+    process.inputStream.readAllBytes().decodeToString().let(::println)
+    process.errorStream.readAllBytes().decodeToString().let(::println)
+    println("finish")
+}
+
+tasks.withType<ProcessResources> {
+    dependsOn(":buildGuidePdf")
+}
+
 repositories {
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
@@ -29,6 +50,14 @@ dependencies {
     implementation("com.github.qurben:jico:v2.2.0")
     // https://mvnrepository.com/artifact/commons-io/commons-io
     implementation("commons-io:commons-io:2.16.1")
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDirs( "build/generated/resources")
+        }
+    }
 }
 
 compose.desktop {

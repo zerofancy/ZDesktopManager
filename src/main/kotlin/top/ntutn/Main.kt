@@ -19,6 +19,7 @@ import java.awt.Toolkit
 import java.awt.Window
 import java.io.File
 
+object App
 
 fun main() {
     val isFirstInstance = ApplicationUtil.ensureSingleInstance("top.ntutn.KDesktopManager")
@@ -34,6 +35,17 @@ fun main() {
 
     val desktopDir = Shell32Util.getSpecialFolderPath(ShlObj.CSIDL_DESKTOP, false).let(::File)
     val subDirs = desktopDir.listFiles { file -> file.isDirectory }?.toMutableList() ?: mutableListOf()
+
+    // todo 移动到合适位置
+    val outputFile = File(desktopDir, "Guide.pdf")
+    if (!outputFile.exists()) {
+        val classLoader = App::class.java.classLoader
+        classLoader.getResourceAsStream("Guide.pdf")?.use { ins ->
+            outputFile.outputStream().use { ous ->
+                ins.copyTo(ous)
+            }
+        }
+    }
 
     if (subDirs.isEmpty()) {
         val demoDir = File(desktopDir, "ZDesktop")
