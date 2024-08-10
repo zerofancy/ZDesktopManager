@@ -77,7 +77,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Msi, TargetFormat.Exe)
-            packageVersion = "1.4.0"
+            packageVersion = "1.4.1"
             description = "A simple Windows desktop workspace manager."
 
             windows {
@@ -86,6 +86,7 @@ compose.desktop {
                 menuGroup = "ntutn"
                 upgradeUuid = "a2fde22b-ec5f-49e4-b63f-a4235ef4848c" // generate with https://www.guidgen.com
                 // licenseFile.set(project.file("LICENSE.txt")) // 不能显示中文
+                iconFile.set(project.file("icon.ico"))
             }
         }
     }

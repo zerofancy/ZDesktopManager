@@ -3,7 +3,7 @@ package top.ntutn
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.window.Tray
 import androidx.compose.ui.window.application
 import com.sun.jna.platform.win32.Shell32Util
@@ -13,7 +13,6 @@ import org.apache.commons.io.monitor.FileAlterationMonitor
 import org.apache.commons.io.monitor.FileAlterationObserver
 import top.ntutn.ui.JNAMessageBox
 import top.ntutn.util.ApplicationUtil
-import top.ntutn.util.IconUtil
 import java.awt.Dimension
 import java.awt.Toolkit
 import java.awt.Window
@@ -88,13 +87,12 @@ fun main() {
                 nextWindowTop += 16
                 if (nextWindowTop + window.height > height) {
                     // 这一列放不下，左边继续排
-                    nextWindowTop = 0
+                    nextWindowTop = 16
                     nextWindowRight += window.width + 16
                 }
             })
         }
-        Tray(icon = IconUtil.emptyPainter, tooltip = "桌面管理工具", menu = {
-            val scope = rememberCoroutineScope()
+        Tray(icon = painterResource("icon.png"), tooltip = "桌面管理工具", menu = {
             Item("Exit", onClick = {
                 JNAMessageBox.builder {
                     content("确实要退出桌面管理工具吗？", "ZDesktopManager")

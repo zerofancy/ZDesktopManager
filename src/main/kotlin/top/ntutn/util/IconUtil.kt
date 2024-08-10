@@ -4,6 +4,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toPainter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import com.sun.jna.Memory
 import com.sun.jna.Pointer
