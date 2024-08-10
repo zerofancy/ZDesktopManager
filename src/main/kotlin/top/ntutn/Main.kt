@@ -18,6 +18,7 @@ import java.awt.Dimension
 import java.awt.Toolkit
 import java.awt.Window
 import java.io.File
+import kotlin.system.exitProcess
 
 object App
 
@@ -36,24 +37,29 @@ fun main() {
     val desktopDir = Shell32Util.getSpecialFolderPath(ShlObj.CSIDL_DESKTOP, false).let(::File)
     val subDirs = desktopDir.listFiles { file -> file.isDirectory }?.toMutableList() ?: mutableListOf()
 
-    // todo 移动到合适位置
-    val outputFile = File(desktopDir, "Guide.pdf")
-    if (!outputFile.exists()) {
-        val classLoader = App::class.java.classLoader
-        classLoader.getResourceAsStream("Guide.pdf")?.use { ins ->
-            outputFile.outputStream().use { ous ->
-                ins.copyTo(ous)
-            }
-        }
-    }
-
     if (subDirs.isEmpty()) {
-        val demoDir = File(desktopDir, "ZDesktop")
-        demoDir.mkdir()
-        // todo 插入一篇说明文档
-        subDirs.add(demoDir)
+        JNAMessageBox.builder {
+            content("桌面上没有任何文件夹，是否要创建示例？", "ZDesktopManager")
+            questionIcon()
+            yesNo(yesCallback = {
+                val demoDir = File(desktopDir, "ZDesktop")
+                demoDir.mkdir()
+                subDirs.add(demoDir)
+
+                val outputFile = File(demoDir, "Guide.pdf")
+                if (!outputFile.exists()) {
+                    val classLoader = App::class.java.classLoader
+                    classLoader.getResourceAsStream("guide/Guide.pdf")?.use { ins ->
+                        outputFile.outputStream().use { ous ->
+                            ins.copyTo(ous)
+                        }
+                    }
+                }
+            }, noCallback = {
+                exitProcess(0)
+            })
+        }.build().showSync()
     }
-    println(subDirs.joinToString())
 
     val dimension: Dimension = Toolkit.getDefaultToolkit().screenSize
 
@@ -64,6 +70,15 @@ fun main() {
     application {
         val desktopChildrenDirs = remember { mutableStateListOf<File>(elements = subDirs.toTypedArray()) }
 
+        if (desktopChildrenDirs.isEmpty()) {
+            JNAMessageBox.builder {
+                content("桌面上不存在任何文件夹，管理工具即将退出。", "ZDesktopManager")
+                warningIcon()
+                buttonOk {
+                    exitApplication()
+                }
+            }.build().showAsync()
+        }
         var nextWindowTop = 16
         var nextWindowRight = 16
         desktopChildrenDirs.forEachIndexed { dirIndex, dir ->

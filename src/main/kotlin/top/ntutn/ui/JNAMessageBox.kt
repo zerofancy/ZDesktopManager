@@ -62,6 +62,10 @@ class JNAMessageBox {
             building.iconFlags = IconFlags.NONE
         }
 
+        fun questionIcon() = apply {
+            building.iconFlags = IconFlags.QUESTION
+        }
+
         fun informationIcon() = apply {
             building.iconFlags = IconFlags.INFORMATION
         }
