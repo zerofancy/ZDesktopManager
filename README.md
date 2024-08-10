@@ -2,6 +2,8 @@
 
 一个简单的桌面管理工具，目前功能比较简陋。
 
+![屏幕截图](docs/guide/screenshot1.png)
+
 ## 技术和依赖
 
 虽然使用Compose Desktop开发，但因为功能特性不可避免用了一些Win32 API，因此只能在Windows下运行。目前仅测试过Windows 11。
