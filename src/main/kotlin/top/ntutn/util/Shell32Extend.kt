@@ -7,6 +7,7 @@ import com.sun.jna.platform.win32.WinDef.HICON
 import com.sun.jna.platform.win32.WinDef.HINSTANCE
 import com.sun.jna.win32.W32APIOptions
 
+@Suppress("FunctionName")
 interface Shell32Extend: Shell32 {
     companion object {
         val instance: Shell32Extend = Native.load("shell32", Shell32Extend::class.java, W32APIOptions.DEFAULT_OPTIONS)
