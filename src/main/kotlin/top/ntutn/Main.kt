@@ -36,29 +36,30 @@ fun main() {
     val desktopDir = Shell32Util.getSpecialFolderPath(ShlObj.CSIDL_DESKTOP, false).let(::File)
     val subDirs = desktopDir.listFiles { file -> file.isDirectory }?.toMutableList() ?: mutableListOf()
 
-    if (subDirs.isEmpty()) {
-        JNAMessageBox.builder {
-            content("桌面上没有任何文件夹，是否要创建示例？", "ZDesktopManager")
-            questionIcon()
-            yesNo(yesCallback = {
-                val demoDir = File(desktopDir, "ZDesktop")
-                demoDir.mkdir()
-                subDirs.add(demoDir)
-
-                val outputFile = File(demoDir, "Guide.pdf")
-                if (!outputFile.exists()) {
-                    val classLoader = App::class.java.classLoader
-                    classLoader.getResourceAsStream("guide/Guide.pdf")?.use { ins ->
-                        outputFile.outputStream().use { ous ->
-                            ins.copyTo(ous)
-                        }
-                    }
-                }
-            }, noCallback = {
-                exitProcess(0)
-            })
-        }.build().showSync()
-    }
+    // 有些应用安装刷新桌面时会短暂返回空
+//    if (subDirs.isEmpty()) {
+//        JNAMessageBox.builder {
+//            content("桌面上没有任何文件夹，是否要创建示例？", "ZDesktopManager")
+//            questionIcon()
+//            yesNo(yesCallback = {
+//                val demoDir = File(desktopDir, "ZDesktop")
+//                demoDir.mkdir()
+//                subDirs.add(demoDir)
+//
+//                val outputFile = File(demoDir, "Guide.pdf")
+//                if (!outputFile.exists()) {
+//                    val classLoader = App::class.java.classLoader
+//                    classLoader.getResourceAsStream("guide/Guide.pdf")?.use { ins ->
+//                        outputFile.outputStream().use { ous ->
+//                            ins.copyTo(ous)
+//                        }
+//                    }
+//                }
+//            }, noCallback = {
+//                exitProcess(0)
+//            })
+//        }.build().showSync()
+//    }
 
     val dimension: Dimension = Toolkit.getDefaultToolkit().screenSize
 

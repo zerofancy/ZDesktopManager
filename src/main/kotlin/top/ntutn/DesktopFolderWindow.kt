@@ -2,14 +2,16 @@ package top.ntutn
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
+import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.*
+import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
@@ -31,8 +33,9 @@ import org.apache.commons.io.monitor.FileAlterationObserver
 import top.ntutn.util.IconUtil
 import java.awt.Window
 import java.io.File
+import java.util.UUID
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun DesktopFolderWindow(folderFile: File, onCloseWindowRequest: () -> Unit = {}, onPlacingWindow: (Window) -> Unit) {
     val dialogState = rememberDialogState()
@@ -77,6 +80,21 @@ fun DesktopFolderWindow(folderFile: File, onCloseWindowRequest: () -> Unit = {},
                         folderFile.nameWithoutExtension,
                         childrenFiles = childrenFilesState,
                         modifier = Modifier.fillMaxSize()
+                            .onExternalDrag(onDrop = { externalDragValue ->
+                                when (val dragData = externalDragValue.dragData) {
+                                    is DragData.Text -> {
+                                        val text = dragData.readText()
+                                        println("Saving drop text")
+                                        val outFile = File(folderFile, UUID.randomUUID().toString() + ".txt")
+                                        outFile.writeText(text)
+                                    }
+                                    is DragData.FilesList -> {
+                                        dragData.readFiles().forEach {
+                                            println("Receiving $it")
+                                        }
+                                    }
+                                }
+                            })
                     )
                 }
             }
