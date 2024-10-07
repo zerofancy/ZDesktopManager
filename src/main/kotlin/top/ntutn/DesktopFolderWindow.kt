@@ -55,12 +55,13 @@ fun DesktopFolderWindow(folderFile: File, onCloseWindowRequest: () -> Unit = {},
             icon = IconUtil.getFileIconPainter(folderFile, 64.dp, 64.dp)
         }
         MaterialTheme {
-            val openFunction: () -> Unit = { // fixme 这个API有时好像会导致卡死，需要异步+超时处理
+            val openFunction: () -> Unit = {
                 Shell32.INSTANCE.ShellExecuteEx(ShellAPI.SHELLEXECUTEINFO().also {
                     it.lpFile = folderFile.absolutePath
                     it.nShow = User32.SW_SHOW
                     it.fMask = 0x0000000c
                     it.lpVerb = if (folderFile.isDirectory) "explore" else "open"
+                    it.hwnd = HWND(Pointer(window.windowHandle)) // https://www.experts-exchange.com/questions/10299966/Application-hangs-after-ShellExecute.html
                 })
             }
             val childrenFilesState = remember { mutableStateListOf<File>() }
