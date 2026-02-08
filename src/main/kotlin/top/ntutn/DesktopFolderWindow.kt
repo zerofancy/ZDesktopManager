@@ -25,6 +25,7 @@ import com.sun.jna.platform.win32.Shell32
 import com.sun.jna.platform.win32.ShellAPI
 import com.sun.jna.platform.win32.User32
 import com.sun.jna.platform.win32.WinDef.HWND
+import top.ntutn.util.WindowsVersionUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor
@@ -269,22 +270,70 @@ private fun DesktopFileCard(file: File, modifier: Modifier = Modifier) {
 }
 
 private fun insertWindowToDesktop(childHwnd: HWND) {
-
-    // find defView in Program
+    println("=== 开始窗口嵌入到桌面 ===")
+    
+    var container: HWND? = null
+    
+    // 方法1: 查找包含SHELLDLL_DefView的Progman窗口
     val program: HWND? = User32.INSTANCE.FindWindowEx(HWND(Pointer.NULL), HWND(Pointer.NULL), "Progman", null)
-    var defView: HWND? = User32.INSTANCE.FindWindowEx(program, HWND(Pointer.NULL), "SHELLDLL_DefView", null)
-    var container = program.takeIf { program?.pointer != null && defView?.pointer != null }
-
-    if (container == null) {
-        // find defView in WorkerW
+    if (program?.pointer != null) {
+        println("找到Progman窗口: ${program.pointer}")
+        val defView: HWND? = User32.INSTANCE.FindWindowEx(program, HWND(Pointer.NULL), "SHELLDLL_DefView", null)
+        if (defView?.pointer != null) {
+            println("在Progman中找到SHELLDLL_DefView窗口: ${defView.pointer}")
+            container = defView // 使用SHELLDLL_DefView作为容器
+        }
+    }
+    
+    // 方法2: 如果方法1失败，查找包含SHELLDLL_DefView的WorkerW窗口
+    if (container == null || container.pointer == Pointer.NULL) {
+        println("方法1失败，尝试方法2: 查找WorkerW窗口")
         val desktopHwnd = User32.INSTANCE.GetDesktopWindow()
         var workerW: HWND? = HWND(Pointer.NULL)
         do {
             workerW = User32.INSTANCE.FindWindowEx(desktopHwnd, workerW, "WorkerW", null)
-            defView = User32.INSTANCE.FindWindowEx(workerW, HWND(Pointer.NULL), "SHELLDLL_DefView", null);
-        } while (defView?.pointer == Pointer.NULL && workerW?.pointer != Pointer.NULL)
-        container = workerW
+            if (workerW?.pointer != null) {
+                val defView: HWND? = User32.INSTANCE.FindWindowEx(workerW, HWND(Pointer.NULL), "SHELLDLL_DefView", null);
+                if (defView?.pointer != null) {
+                    println("在WorkerW中找到SHELLDLL_DefView窗口: ${defView.pointer}")
+                    container = defView // 使用SHELLDLL_DefView作为容器
+                    break
+                }
+            }
+        } while (workerW?.pointer != Pointer.NULL)
     }
-
-    User32.INSTANCE.SetParent(childHwnd, container)
+    
+    // 方法3: 如果前两种方法都失败，尝试使用Progman作为备用容器
+    if (container == null || container.pointer == Pointer.NULL) {
+        println("方法2失败，尝试方法3: 使用Progman作为备用容器")
+        if (program?.pointer != null) {
+            container = program
+        }
+    }
+    
+    // 方法4: 如果所有方法都失败，使用桌面窗口作为最后的备用
+    if (container == null || container.pointer == Pointer.NULL) {
+        println("方法3失败，尝试方法4: 使用桌面窗口作为最后的备用")
+        val desktopHwnd = User32.INSTANCE.GetDesktopWindow()
+        if (desktopHwnd?.pointer != null) {
+            container = desktopHwnd
+        }
+    }
+    
+    // 执行窗口嵌入
+    if (container != null && container.pointer != Pointer.NULL) {
+        println("使用容器窗口: ${container.pointer} 嵌入子窗口: ${childHwnd.pointer}")
+        val result = User32.INSTANCE.SetParent(childHwnd, container)
+        println("窗口嵌入结果: $result")
+        
+        // 确保窗口可见
+        User32.INSTANCE.ShowWindow(childHwnd, User32.SW_SHOW)
+        
+        // 强制刷新桌面，确保窗口正确嵌入
+        User32.INSTANCE.SendMessage(container, 0x001A, null, null) // WM_SETTINGCHANGE
+    } else {
+        println("错误: 找不到合适的容器窗口，无法嵌入子窗口")
+    }
+    
+    println("=== 窗口嵌入操作完成 ===")
 }

@@ -13,6 +13,7 @@ import org.apache.commons.io.monitor.FileAlterationMonitor
 import org.apache.commons.io.monitor.FileAlterationObserver
 import top.ntutn.ui.JNAMessageBox
 import top.ntutn.util.ApplicationUtil
+import top.ntutn.util.DesktopWindowDiagnostics
 import java.awt.Dimension
 import java.awt.Toolkit
 import java.awt.Window
@@ -22,6 +23,9 @@ import kotlin.system.exitProcess
 object App
 
 fun main() {
+    // 诊断桌面窗口结构
+    DesktopWindowDiagnostics.diagnoseDesktopWindows()
+    
     val isFirstInstance = ApplicationUtil.ensureSingleInstance("top.ntutn.KDesktopManager")
 
     if (!isFirstInstance) {
